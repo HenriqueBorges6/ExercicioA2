@@ -1,0 +1,1 @@
+Pasta que conterá os arquivos usados pelo dashboard.

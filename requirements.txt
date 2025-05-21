@@ -1,0 +1,12 @@
+# Backend API
+flask
+
+# Frontend com Streamlit
+streamlit
+streamlit-autorefresh
+altair
+pandas
+requests
+
+# Utilitários
+uuid
