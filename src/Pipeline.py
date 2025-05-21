@@ -9,8 +9,8 @@ from DataFrame import DataFrame
 from utils.timing import StageTimer, log_stage
 
 # === CONFIG ===
-DEFAULT_NUM_PROCESSES = 6
-CHUNK_SIZE = 10_000
+DEFAULT_NUM_PROCESSES = 4
+CHUNK_SIZE = 5_000
 
 OUTPUT_EVENT_CSV      = "event_count_last_hour.csv"
 OUTPUT_GENRE_CSV      = "genre_views_last_24h.csv"
@@ -82,6 +82,7 @@ def process_event_counts(repo: DataRepository, nproc: int):
         acc = HandlerValueCount().group_by_sum(prev, "event", "quantidade")
     except FileNotFoundError:
         pass
+    print(f"[DEBUG] Salvando {path} com {len(acc)} linhas.")
     repo.save_dataframe_to_csv(acc, path)
     print(" Event stage complete.")
 

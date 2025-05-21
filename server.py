@@ -97,7 +97,7 @@ def run_pipeline(called_from_app=False, num_processes=None):
         log(f"Pipeline error after {duration:.2f}s: {e}")
 
 # ========== SCHEDULER ==========
-def schedule_pipeline_runs(interval_seconds=300):
+def schedule_pipeline_runs(interval_seconds=10):
     log(f"Scheduler: scheduling every {interval_seconds}s.")
     next_time = time.time() + interval_seconds
     try:
@@ -150,5 +150,5 @@ if __name__ == '__main__':
     flask_thread.start()
 
     # Run scheduler
-    schedule_pipeline_runs(interval_seconds=300)
+    # schedule_pipeline_runs(interval_seconds=300)
     stop_all_mock_processes()

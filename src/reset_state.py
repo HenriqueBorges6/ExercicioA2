@@ -1,38 +1,47 @@
 import os
 import shutil
 
-def reset_markers():
-    marker_dir = os.path.join("src","markers")
-    if os.path.exists(marker_dir):
-        for f in os.listdir(marker_dir):
-            path = os.path.join(marker_dir, f)
-            if os.path.isfile(path):
-                os.remove(path)
-        print(f"Marcadores resetados ({marker_dir}/).")
-    else:
-        print("Pasta 'markers/' não existe.")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
 
-def reset_csvs():
-    csv_dir = "transformed_data"
-    if os.path.exists(csv_dir):
-        for f in os.listdir(csv_dir):
-            path = os.path.join(csv_dir, f)
-            if os.path.isfile(path) and f.endswith(".csv"):
-                os.remove(path)
-        print(f"CSVs resetados ({csv_dir}/).")
+def remover_pasta(pasta):
+    path = os.path.join(ROOT_DIR, pasta)
+    if os.path.exists(path):
+        shutil.rmtree(path)
+        print(f" Pasta removida: {pasta}")
     else:
-        print("Pasta 'transformed_data/' não existe.")
-def reset_csvs_metrics():
-    csv_dir = os.path.join("src","transformed_data")
-    if os.path.exists(csv_dir):
-        for f in os.listdir(csv_dir):
-            path = os.path.join(csv_dir, f)
-            if os.path.isfile(path) and f.endswith(".csv"):
-                os.remove(path)
-        print(f"CSVs resetados ({csv_dir}/).")
+        print(f" Pasta não encontrada: {pasta}")
+
+def remover_arquivo(nome):
+    path = os.path.join(ROOT_DIR, nome)
+    if os.path.exists(path):
+        os.remove(path)
+        print(f" Arquivo removido: {nome}")
     else:
-        print("Pasta 'transformed_data/' não existe.")
+        print(f" Arquivo não encontrado: {nome}")
+
+def main():
+    print(" Resetando estado do sistema...")
+
+    # 1. Limpa logs e diretório archive
+    remover_pasta("streaming_logs")
+
+    # 2. Limpa dados transformados
+    remover_pasta("transformed_data")
+
+    # 3. Remove banco de dados
+    remover_arquivo("streaming_mock.db")
+
+    # 5. Remove marcadores de progresso (se existirem)
+    marcador_dir = os.path.join(ROOT_DIR, "src", "markers")
+    if os.path.exists(marcador_dir):
+        for f in os.listdir(marcador_dir):
+            if f.endswith(".marker"):
+                remover_arquivo(os.path.join("src", "markers", f))
+    else:
+        print(" Pasta de marcadores não encontrada.")
+
+    print(" Estado resetado com sucesso.")
 
 if __name__ == "__main__":
-    reset_markers()
-    reset_csvs()
+    main()
