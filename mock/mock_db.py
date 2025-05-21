@@ -325,7 +325,7 @@ def main_loop() -> None:
             view_gen.generate(user_ids, content_ids, episode_ids, device_ids, n=100)
 
             print(f"[{time.ctime()}] Mock DB updated. Sleeping...\n")
-            time.sleep(1)
+            # time.sleep(0.1)
 
     except KeyboardInterrupt:
         print(f"\n[{time.ctime()}] Mock DB: KeyboardInterrupt received. Stopping DB generation.")

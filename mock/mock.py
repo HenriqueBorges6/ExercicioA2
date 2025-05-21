@@ -13,7 +13,7 @@ STREAMING_LOG_DIR: str = "streaming_logs"
 os.makedirs(STREAMING_LOG_DIR, exist_ok=True)
 
 NUMBER_OF_LOGS_PER_FILE: int = 1000
-FILE_INTERVAL_SEC: int = 2
+FILE_INTERVAL_SEC: float = 0.1 
 
 NUMBER_OF_USERS: int = 100
 EVENT_TYPES: List[str] = ['play', 'pause', 'stop', 'search', 'login', 'logout', 'like', 'dislike', 'skip_ad']
@@ -66,6 +66,6 @@ if __name__ == "__main__":
     try:
         while True:
             generate_log_file()
-            time.sleep(FILE_INTERVAL_SEC)
+            # time.sleep(FILE_INTERVAL_SEC)
     except KeyboardInterrupt:
         print(f"\n[INFO] Mock: Stopped by user.")
