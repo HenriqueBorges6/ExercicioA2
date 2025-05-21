@@ -142,47 +142,34 @@ class DataRepository:
         chunk_size: int,
         task_queue,
         marker_file: str,
-        marker_column: str = None  # Se None, usará rowid
-    ) -> int:
+        marker_column: str = None,
+        dry_run: bool = False
+    ):
         """
-        Extrai dados novos de uma tabela SQLite de forma incremental, evitando reprocessar registros já lidos.
-        Se marker_column for fornecido, usa-o (ex: 'start_date'); do contrário, usa o rowid do SQLite.
-        Os registros são enviados em chunks como objetos DataFrame para a task_queue.
-
-        Args:
-            db_path (str): Caminho para o arquivo .db.
-            table_name (str): Nome da tabela.
-            chunk_size (int): Número de linhas por chunk.
-            task_queue: Fila para envio dos DataFrames.
-            marker_file (str): Arquivo que guarda o último marcador processado.
-            marker_column (str, opcional): Nome da coluna usada para controle incremental (ex: 'start_date').
-                                            Se None, usa rowid.
+        Extrai dados novos de uma tabela SQLite de forma incremental.
+        Pode enviar DataFrames para uma fila (modo tradicional) ou retornar uma lista (modo dry_run).
 
         Retorna:
-            int: Número total de chunks extraídos.
+            - int: número de chunks extraídos, se dry_run=False
+            - list[DataFrame]: lista de DataFrames, se dry_run=True
         """
-        # Garante que a pasta do arquivo marcador existe
         marker_dir = os.path.dirname(marker_file)
-        if marker_dir:  # evita erro se marker_file for só "content.txt"
+        if marker_dir:
             os.makedirs(marker_dir, exist_ok=True)
 
         if not os.path.exists(db_path):
             print(f"[extract_incremental] DB não encontrado: {db_path}")
-            return 0
+            return 0 if not dry_run else []
 
-        # Carregar o último marcador processado
         last_processed = "0"
         if os.path.exists(marker_file):
             with open(marker_file, "r", encoding="utf-8") as f:
                 last_processed = f.read().strip()
-        # Se marker_column for fornecido, assumimos que é string com formato de data ou similar; 
-        # caso contrário, trabalhamos com números (rowid) – por isso iniciamos em "0"
-        
+
         try:
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
 
-            # Definir qual coluna usar
             if marker_column:
                 query = f"""
                     SELECT * FROM {table_name}
@@ -190,17 +177,17 @@ class DataRepository:
                     ORDER BY {marker_column} ASC
                 """
             else:
-                # Se não houver marcador definido, usamos o rowid
                 query = f"""
                     SELECT rowid, * FROM {table_name}
                     WHERE rowid > ?
                     ORDER BY rowid ASC
                 """
+
             cursor.execute(query, (last_processed,))
-            # Obter nomes das colunas
             columns = [desc[0] for desc in cursor.description]
             chunk_count = 0
             max_marker_seen = last_processed
+            dataframes = [] if dry_run else None
 
             while True:
                 rows = cursor.fetchmany(chunk_size)
@@ -209,31 +196,34 @@ class DataRepository:
 
                 df_chunk = DataFrame(columns=columns)
                 for row in rows:
-                    # Caso usemos rowid, o primeiro campo é esse marcador
                     row_dict = dict(zip(columns, row))
                     df_chunk.add_row(list(row))
-                    # Atualiza o marcador conforme o campo selecionado
-                    if marker_column:
-                        current_marker = row_dict.get(marker_column)
-                    else:
-                        current_marker = str(row_dict.get("rowid"))
+
+                    current_marker = (
+                        row_dict.get(marker_column)
+                        if marker_column else str(row_dict.get("rowid"))
+                    )
                     if current_marker and current_marker > max_marker_seen:
                         max_marker_seen = current_marker
 
-                task_queue.put(df_chunk)
+                if dry_run:
+                    dataframes.append(df_chunk)
+                else:
+                    task_queue.put(df_chunk)
+
                 chunk_count += 1
 
-            # Atualiza o arquivo de controle com o último marcador processado, se houve algum novo dado
             if chunk_count > 0:
                 with open(marker_file, "w", encoding="utf-8") as f:
                     f.write(max_marker_seen)
 
             print(f"[extract_incremental] {chunk_count} chunks extraídos da tabela '{table_name}' com marcador > {last_processed}.")
-            return chunk_count
+
+            return dataframes if dry_run else chunk_count
 
         except sqlite3.Error as e:
             print(f"[extract_incremental] Erro ao acessar a tabela '{table_name}': {e}")
-            return 0
+            return [] if dry_run else 0
 
         finally:
             if conn:

@@ -1,1 +1,39 @@
-/.DS_Store
+# Ambiente virtual
+.venv/
+venv/
+ENV/
+env/
+
+# Dados gerados
+*.db
+*.db-journal
+streaming_mock.db
+transformed_data/
+streaming_logs/archive/
+
+# Arquivos temporários e cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.tmp
+
+# VS Code / PyCharm
+.vscode/
+.idea/
+
+# Configuração de sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos CSV gerados pela pipeline
+*.csv
+!*.csv.example  # (se quiser deixar um exemplo de estrutura de CSV)
+
+# Arquivos de output do Streamlit
+.streamlit/
+
+# Arquivos de teste temporários
+test.ipynb
+*.ipynb_checkpoints/

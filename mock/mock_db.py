@@ -299,18 +299,28 @@ def main_loop() -> None:
         while True:
             print(f"[{time.ctime()}] Generating new mock data...")
 
+            # Geração inicial
             user_gen.generate(100)
             content_gen.generate(50)
 
+            # Coleta de dados após geração inicial
             user_ids = [r[0] for r in conn.execute("SELECT user_id FROM User").fetchall()]
             content_ids = [r[0] for r in conn.execute("SELECT content_id FROM Content").fetchall()]
-            episode_ids = [r[0] for r in conn.execute("SELECT episode_id FROM Episode").fetchall()]
-            device_ids = [r[0] for r in conn.execute("SELECT device_id FROM Device").fetchall()]
 
+            # Geração que depende de user_ids e content_ids
             episode_gen.generate(content_ids)
             device_gen.generate(user_ids)
-            trans_gen.generate(user_ids)
 
+            # Coleta de dados atualizada após gerar episodes e devices
+            episode_ids = [r[0] for r in conn.execute("SELECT episode_id FROM Episode").fetchall()]
+            device_ids  = [r[0] for r in conn.execute("SELECT device_id FROM Device").fetchall()]
+
+            # Verificação mínima
+            if not user_ids or not content_ids or not device_ids:
+                raise RuntimeError("Dados insuficientes para gerar interações.")
+
+            # Geração restante
+            trans_gen.generate(user_ids)
             rating_gen.generate(user_ids, content_ids, n=100)
             view_gen.generate(user_ids, content_ids, episode_ids, device_ids, n=100)
 
