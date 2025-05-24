@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package event;
+
+// The Event message structure
+message Event {
+  string id = 1;
+  string type = 2;
+  string timestamp = 3;
+  string payload = 4;
+}
+
+// Acknowledge receipt
+message Ack {
+  bool success = 1;
+  string message = 2;
+}
+
+// Service for sending events
+service EventService {
+  rpc SendEvent (Event) returns (Ack);
+}
