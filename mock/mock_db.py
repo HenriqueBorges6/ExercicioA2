@@ -205,8 +205,8 @@ class MockViewHistoryGenerator(MockEntityGenerator):
 # Schema Setup ------------------------------------------------------------------------------------
 
 def create_schema(conn: sqlite3.Connection) -> None:
-    cur = conn.cursor()
-    cur.executescript("""
+    cursor = conn.cursor()
+    cursor.executescript("""
     CREATE TABLE IF NOT EXISTS User (
         user_id TEXT PRIMARY KEY,
         user_name TEXT,
@@ -283,7 +283,7 @@ def create_schema(conn: sqlite3.Connection) -> None:
 def main_loop() -> None:
     conn = sqlite3.connect(DB_FILE)
     create_schema(conn)
-
+    
     plan_gen = MockPlanGenerator(conn)
     user_gen = MockUserGenerator(conn)
     content_gen = MockContentGenerator(conn)

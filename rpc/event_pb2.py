@@ -24,17 +24,35 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0b\x65vent.proto\x12\x05\x65vent\"E\n\x05\x45vent\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04type\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\t\x12\x0f\n\x07payload\x18\x04 \x01(\t\"\'\n\x03\x41\x63k\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t25\n\x0c\x45ventService\x12%\n\tSendEvent\x12\x0c.event.Event\x1a\n.event.Ackb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0b\x65vent.proto\x12\x05\x65vent\"\x15\n\x03\x41\x63k\x12\x0e\n\x06status\x18\x01 \x01(\t\"\xb6\x03\n\x05\x45vent\x12&\n\nuser_event\x18\x01 \x01(\x0b\x32\x10.event.UserEventH\x00\x12,\n\rcontent_event\x18\x02 \x01(\x0b\x32\x13.event.ContentEventH\x00\x12,\n\repisode_event\x18\x03 \x01(\x0b\x32\x13.event.EpisodeEventH\x00\x12*\n\x0crating_event\x18\x04 \x01(\x0b\x32\x12.event.RatingEventH\x00\x12*\n\x0c\x64\x65vice_event\x18\x05 \x01(\x0b\x32\x12.event.DeviceEventH\x00\x12\x35\n\x12view_history_event\x18\x06 \x01(\x0b\x32\x17.event.ViewHistoryEventH\x00\x12&\n\nplan_event\x18\x07 \x01(\x0b\x32\x10.event.PlanEventH\x00\x12\x36\n\x12subscription_event\x18\x08 \x01(\x0b\x32\x18.event.SubscriptionEventH\x00\x12,\n\rrevenue_event\x18\t \x01(\x0b\x32\x13.event.RevenueEventH\x00\x42\x0c\n\nevent_type\"\x90\x01\n\tUserEvent\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x11\n\tuser_name\x18\x02 \x01(\t\x12\x12\n\nuser_email\x18\x03 \x01(\t\x12\x16\n\x0euser_birthdate\x18\x04 \x01(\t\x12\x19\n\x11user_service_plan\x18\x05 \x01(\t\x12\x18\n\x10user_signup_date\x18\x06 \x01(\t\"f\n\x0c\x43ontentEvent\x12\x12\n\ncontent_id\x18\x01 \x01(\t\x12\x15\n\rcontent_title\x18\x02 \x01(\t\x12\x14\n\x0c\x63ontent_type\x18\x03 \x01(\t\x12\x15\n\rcontent_genre\x18\x04 \x01(\t\"6\n\x0c\x45pisodeEvent\x12\x12\n\nepisode_id\x18\x01 \x01(\t\x12\x12\n\ncontent_id\x18\x02 \x01(\t\"i\n\x0bRatingEvent\x12\x11\n\trating_id\x18\x01 \x01(\t\x12\r\n\x05grade\x18\x02 \x01(\x05\x12\x13\n\x0brating_date\x18\x03 \x01(\t\x12\x0f\n\x07user_id\x18\x04 \x01(\t\x12\x12\n\ncontent_id\x18\x05 \x01(\t\"F\n\x0b\x44\x65viceEvent\x12\x11\n\tdevice_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65vice_type\x18\x02 \x01(\t\x12\x0f\n\x07user_id\x18\x03 \x01(\t\"\x95\x01\n\x10ViewHistoryEvent\x12\x0f\n\x07view_id\x18\x01 \x01(\t\x12\x12\n\nstart_date\x18\x02 \x01(\t\x12\x10\n\x08\x65nd_date\x18\x03 \x01(\t\x12\x11\n\tdevice_id\x18\x04 \x01(\t\x12\x0f\n\x07user_id\x18\x05 \x01(\t\x12\x12\n\ncontent_id\x18\x06 \x01(\t\x12\x12\n\nepisode_id\x18\x07 \x01(\t\"X\n\tPlanEvent\x12\x0f\n\x07plan_id\x18\x01 \x01(\t\x12\x11\n\tplan_name\x18\x02 \x01(\t\x12\x12\n\nplan_price\x18\x03 \x01(\t\x12\x13\n\x0bnum_screens\x18\x04 \x01(\t\"\x7f\n\x11SubscriptionEvent\x12\x16\n\x0etransaction_id\x18\x01 \x01(\t\x12\x18\n\x10transaction_date\x18\x02 \x01(\t\x12\x16\n\x0epayment_method\x18\x03 \x01(\t\x12\x0f\n\x07user_id\x18\x04 \x01(\t\x12\x0f\n\x07plan_id\x18\x05 \x01(\t\"?\n\x0cRevenueEvent\x12\x12\n\nrevenue_id\x18\x01 \x01(\t\x12\x0c\n\x04\x64\x61te\x18\x02 \x01(\t\x12\r\n\x05value\x18\x03 \x01(\t27\n\x0c\x45ventService\x12\'\n\tSendEvent\x12\x0c.event.Event\x1a\n.event.Ack(\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'event_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_EVENT']._serialized_start=22
-  _globals['_EVENT']._serialized_end=91
-  _globals['_ACK']._serialized_start=93
-  _globals['_ACK']._serialized_end=132
-  _globals['_EVENTSERVICE']._serialized_start=134
-  _globals['_EVENTSERVICE']._serialized_end=187
+  _globals['_ACK']._serialized_start=22
+  _globals['_ACK']._serialized_end=43
+  _globals['_EVENT']._serialized_start=46
+  _globals['_EVENT']._serialized_end=484
+  _globals['_USEREVENT']._serialized_start=487
+  _globals['_USEREVENT']._serialized_end=631
+  _globals['_CONTENTEVENT']._serialized_start=633
+  _globals['_CONTENTEVENT']._serialized_end=735
+  _globals['_EPISODEEVENT']._serialized_start=737
+  _globals['_EPISODEEVENT']._serialized_end=791
+  _globals['_RATINGEVENT']._serialized_start=793
+  _globals['_RATINGEVENT']._serialized_end=898
+  _globals['_DEVICEEVENT']._serialized_start=900
+  _globals['_DEVICEEVENT']._serialized_end=970
+  _globals['_VIEWHISTORYEVENT']._serialized_start=973
+  _globals['_VIEWHISTORYEVENT']._serialized_end=1122
+  _globals['_PLANEVENT']._serialized_start=1124
+  _globals['_PLANEVENT']._serialized_end=1212
+  _globals['_SUBSCRIPTIONEVENT']._serialized_start=1214
+  _globals['_SUBSCRIPTIONEVENT']._serialized_end=1341
+  _globals['_REVENUEEVENT']._serialized_start=1343
+  _globals['_REVENUEEVENT']._serialized_end=1406
+  _globals['_EVENTSERVICE']._serialized_start=1408
+  _globals['_EVENTSERVICE']._serialized_end=1463
 # @@protoc_insertion_point(module_scope)

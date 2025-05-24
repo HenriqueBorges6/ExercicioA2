@@ -26,8 +26,7 @@ if _version_not_supported:
 
 
 class EventServiceStub(object):
-    """Service for sending events
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -35,7 +34,7 @@ class EventServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.SendEvent = channel.unary_unary(
+        self.SendEvent = channel.stream_unary(
                 '/event.EventService/SendEvent',
                 request_serializer=event__pb2.Event.SerializeToString,
                 response_deserializer=event__pb2.Ack.FromString,
@@ -43,10 +42,9 @@ class EventServiceStub(object):
 
 
 class EventServiceServicer(object):
-    """Service for sending events
-    """
+    """Missing associated documentation comment in .proto file."""
 
-    def SendEvent(self, request, context):
+    def SendEvent(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -55,7 +53,7 @@ class EventServiceServicer(object):
 
 def add_EventServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'SendEvent': grpc.unary_unary_rpc_method_handler(
+            'SendEvent': grpc.stream_unary_rpc_method_handler(
                     servicer.SendEvent,
                     request_deserializer=event__pb2.Event.FromString,
                     response_serializer=event__pb2.Ack.SerializeToString,
@@ -69,11 +67,10 @@ def add_EventServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class EventService(object):
-    """Service for sending events
-    """
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def SendEvent(request,
+    def SendEvent(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -83,8 +80,8 @@ class EventService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
+        return grpc.experimental.stream_unary(
+            request_iterator,
             target,
             '/event.EventService/SendEvent',
             event__pb2.Event.SerializeToString,
