@@ -4,6 +4,7 @@ import grpc
 import warnings
 
 import event_pb2 as event__pb2
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 GRPC_GENERATED_VERSION = '1.71.0'
 GRPC_VERSION = grpc.__version__
@@ -26,7 +27,8 @@ if _version_not_supported:
 
 
 class EventServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """───── serviço ────────────────────────────────────────────────────
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -39,12 +41,35 @@ class EventServiceStub(object):
                 request_serializer=event__pb2.Event.SerializeToString,
                 response_deserializer=event__pb2.Ack.FromString,
                 _registered_method=True)
+        self.TriggerPipeline = channel.unary_unary(
+                '/event.EventService/TriggerPipeline',
+                request_serializer=event__pb2.PipelineRequest.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                _registered_method=True)
+        self.GetLatestReports = channel.unary_unary(
+                '/event.EventService/GetLatestReports',
+                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                response_deserializer=event__pb2.ReportsBundle.FromString,
+                _registered_method=True)
 
 
 class EventServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """───── serviço ────────────────────────────────────────────────────
+    """
 
     def SendEvent(self, request_iterator, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def TriggerPipeline(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetLatestReports(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -58,6 +83,16 @@ def add_EventServiceServicer_to_server(servicer, server):
                     request_deserializer=event__pb2.Event.FromString,
                     response_serializer=event__pb2.Ack.SerializeToString,
             ),
+            'TriggerPipeline': grpc.unary_unary_rpc_method_handler(
+                    servicer.TriggerPipeline,
+                    request_deserializer=event__pb2.PipelineRequest.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            ),
+            'GetLatestReports': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetLatestReports,
+                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    response_serializer=event__pb2.ReportsBundle.SerializeToString,
+            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
             'event.EventService', rpc_method_handlers)
@@ -67,7 +102,8 @@ def add_EventServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class EventService(object):
-    """Missing associated documentation comment in .proto file."""
+    """───── serviço ────────────────────────────────────────────────────
+    """
 
     @staticmethod
     def SendEvent(request_iterator,
@@ -86,6 +122,60 @@ class EventService(object):
             '/event.EventService/SendEvent',
             event__pb2.Event.SerializeToString,
             event__pb2.Ack.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def TriggerPipeline(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/event.EventService/TriggerPipeline',
+            event__pb2.PipelineRequest.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetLatestReports(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/event.EventService/GetLatestReports',
+            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            event__pb2.ReportsBundle.FromString,
             options,
             channel_credentials,
             insecure,

@@ -140,12 +140,17 @@ class Simulator:
 
     # ---------- chamadas RPC extras ----------
     def _trigger_pipeline(self):
-        print(f"\n[Simulator] Triggering pipeline ({self.sent} events so far)…")
-        try:
-            self.stub.TriggerPipeline(event_pb2.PipelineRequest(n_processes=os.cpu_count() or 4))
-        except grpc.RpcError as err:
-            print("[Simulator] Trigger RPC failed:", err.details())
+        def _call():
+            try:
+                self.stub.TriggerPipeline(
+                    event_pb2.PipelineRequest(n_processes=os.cpu_count() or 4)
+                )
+                log = "[Simulator] Pipeline RPC OK"
+            except grpc.RpcError as err:
+                log = f"[Simulator] Pipeline RPC failed: {err.details()}"
+            print(log)
 
+        threading.Thread(target=_call, daemon=True).start()
     def _fetch_reports(self):
         try:
             bundle = self.stub.GetLatestReports(empty_pb2.Empty())
