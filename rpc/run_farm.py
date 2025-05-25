@@ -24,6 +24,7 @@ def experiment(n_instances):
     for _ in procs:
         lat_all.extend(q.get())
     for p in procs: p.join()
+    print(q.qsize())
     return statistics.mean(lat_all)
 
 if __name__ == "__main__":
