@@ -1,0 +1,107 @@
+syntax = "proto3";
+package event;
+
+import "google/protobuf/empty.proto";   // ← preciso para Empty
+
+// ───── mensagens auxiliares ───────────────────────────────────────
+message Ack { string status = 1; }
+
+message PipelineRequest { int32 n_processes = 1; }
+
+message ReportsBundle {
+  bytes events_csv       = 1;
+  bytes revenue_day_csv  = 2;
+  bytes revenue_mon_csv  = 3;
+  bytes revenue_year_csv = 4;
+  bytes genre_csv        = 5;
+  bytes unfinished_csv   = 6;
+}
+
+// ───── eventos (iguais aos que já usava) ──────────────────────────
+message UserEvent {
+  string user_id = 1;
+  string user_name = 2;
+  string user_email = 3;
+  string user_birthdate = 4;
+  string user_service_plan = 5;
+  string user_signup_date = 6;
+}
+
+message ContentEvent {
+  string content_id = 1;
+  string content_title = 2;
+  string content_type = 3;
+  string content_genre = 4;
+}
+
+message EpisodeEvent {
+  string episode_id = 1;
+  string content_id = 2;
+}
+
+message RatingEvent {
+  string rating_id = 1;
+  int32  grade      = 2;
+  string rating_date = 3;
+  string user_id     = 4;
+  string content_id  = 5;
+}
+
+message DeviceEvent {
+  string device_id   = 1;
+  string device_type = 2;
+  string user_id     = 3;
+}
+
+message ViewHistoryEvent {
+  string view_id    = 1;
+  string start_date = 2;
+  string end_date   = 3;
+  string device_id  = 4;
+  string user_id    = 5;
+  string content_id = 6;
+  string episode_id = 7;
+}
+
+message PlanEvent {
+  string plan_id     = 1;
+  string plan_name   = 2;
+  string plan_price  = 3;
+  string num_screens = 4;
+}
+
+message SubscriptionEvent {
+  string transaction_id   = 1;
+  string transaction_date = 2;
+  string payment_method   = 3;
+  string user_id          = 4;
+  string plan_id          = 5;
+}
+
+message RevenueEvent {
+  string revenue_id = 1;
+  string date       = 2;
+  string value      = 3;
+}
+
+// ───── envelope com oneof ─────────────────────────────────────────
+message Event {
+  oneof event_type {
+    UserEvent           user_event         = 1;
+    ContentEvent        content_event      = 2;
+    EpisodeEvent        episode_event      = 3;
+    RatingEvent         rating_event       = 4;
+    DeviceEvent         device_event       = 5;
+    ViewHistoryEvent    view_history_event = 6;
+    PlanEvent           plan_event         = 7;
+    SubscriptionEvent   subscription_event = 8;
+    RevenueEvent        revenue_event      = 9;
+  }
+}
+
+// ───── serviço ────────────────────────────────────────────────────
+service EventService {
+  rpc SendEvent        (stream Event)         returns (Ack);
+  rpc TriggerPipeline  (PipelineRequest)      returns (google.protobuf.Empty);
+  rpc GetLatestReports (google.protobuf.Empty) returns (ReportsBundle);
+}
