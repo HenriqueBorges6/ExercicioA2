@@ -6,6 +6,7 @@ import grpc
 from google.protobuf import empty_pb2
 
 import event_pb2, event_pb2_grpc
+import argparse # Adicionado para argumentos de linha de comando
 
 
 ###############################################################################
@@ -119,17 +120,21 @@ def simulate_event(event_type: str) -> event_pb2.Event:
 # Gerador & controle do pipeline
 ###############################################################################
 class Simulator:
-    def __init__(self, stub):
+    def __init__(self, stub, client_id): # Adicionado client_id
         self.stub        = stub
         self.sent        = 0
         self._stop       = threading.Event()
         self._evt_iter   = cycle(EVENT_TYPES)
+        self.client_id = client_id # Armazena o ID do cliente
 
     # ---------- produção de eventos ----------
     def _event_stream(self):
         while not self._stop.is_set():
             ev_type = next(self._evt_iter)
-            yield simulate_event(ev_type)
+            event = simulate_event(ev_type)
+            # Opcional: Adicionar um ID único ao evento se for necessário para rastreamento
+            # event.event_id = str(uuid.uuid4()) # Exemplo: se event_pb2.Event tivesse um campo event_id
+            yield event
             self.sent += 1
 
             # trigger automático?
@@ -145,12 +150,15 @@ class Simulator:
                 self.stub.TriggerPipeline(
                     event_pb2.PipelineRequest(n_processes=os.cpu_count() or 4)
                 )
-                log = "[Simulator] Pipeline RPC OK"
+                # log = "[Simulator] Pipeline RPC OK"
+                print(f"[Simulator {self.client_id}] Pipeline RPC OK") # Log com ID do cliente
             except grpc.RpcError as err:
-                log = f"[Simulator] Pipeline RPC failed: {err.details()}"
-            print(log)
+                # log = f"[Simulator] Pipeline RPC failed: {err.details()}"
+                print(f"[Simulator {self.client_id}] Pipeline RPC failed: {err.details()}") # Log com ID do cliente
+            # print(log)
 
         threading.Thread(target=_call, daemon=True).start()
+
     def _fetch_reports(self):
         try:
             bundle = self.stub.GetLatestReports(empty_pb2.Empty())
@@ -164,48 +172,87 @@ class Simulator:
                 (bundle.unfinished_csv,   "unfinished_by_genre.csv"),
             ]:
                 if field:
-                    (REPORT_DIR / fname).write_bytes(field)
+                    # Para evitar conflitos, salvar com nome diferente por cliente se rodar localmente
+                    report_fname = REPORT_DIR / f"client_{self.client_id}_{fname}"
+                    report_fname.write_bytes(field)
                     saved += 1
-            print(f"[Simulator] {saved} CSVs salvos em {REPORT_DIR}")
+            # print(f"[Simulator] {saved} CSVs salvos em {REPORT_DIR}")
+            print(f"[Simulator {self.client_id}] {saved} CSVs salvos em {REPORT_DIR}") # Log com ID do cliente
         except grpc.RpcError as err:
-            print("[Simulator] GetLatestReports RPC failed:", err.details())
+            # print("[Simulator] GetLatestReports RPC failed:", err.details())
+            print(f"[Simulator {self.client_id}] GetLatestReports RPC failed: {err.details()}") # Log com ID do cliente
 
     # ---------- loop principal ----------
     def run(self):
         # executa SendEvent em thread separada para não bloquear stdin
-        t = threading.Thread(target=self._run_stream, daemon=True)
-        t.start()
-
-        print("[Simulator] Ctrl-C p/ sair | Ctrl-P p/ rodar pipeline agora")
-        try:
-            while True:
-                ch = sys.stdin.read(1)
-                if ch.lower() == "p":
-                    self._trigger_pipeline()
-                    time.sleep(3)           # pequeno delay para dar tempo
-                    self._fetch_reports()
-        except KeyboardInterrupt:
-            print("\n[Simulator] Encerrando…")
-            self._stop.set()
-            t.join()
-
-    def _run_stream(self):
-        """Mantém o streaming SendEvent aberto até self._stop."""
+        # Cada simulador (thread) rodará seu próprio SendEvent stream
+        print(f"[Simulator {self.client_id}] Starting SendEvent stream...") # Log com ID do cliente
         try:
             ack = self.stub.SendEvent(self._event_stream())
-            
-            print("[Simulator] SendEvent finalizado — status:", ack.status)
+            print(f"[Simulator {self.client_id}] SendEvent finalizado — status: {ack.status}") # Log com ID do cliente
         except grpc.RpcError as err:
-            print("[Simulator] SendEvent aborted:", err.details())
+            print(f"[Simulator {self.client_id}] SendEvent aborted: {err.details()}") # Log com ID do cliente
+
+    # Novo método para parar o simulador
+    def stop(self):
+        self._stop.set()
 
 
 ###############################################################################
 # Main
 ###############################################################################
 def main():
-    with grpc.insecure_channel(GRPC_SERVER) as channel:
+    parser = argparse.ArgumentParser(description="Simulador de eventos para o servidor gRPC.")
+    parser.add_argument(
+        "--clients",
+        type=int,
+        default=1,
+        help="Número de clientes simultâneos a serem simulados (padrão: 1)"
+    )
+    args = parser.parse_args()
+
+    simulators = []
+    threads = []
+
+    print(f"Iniciando simulador com {args.clients} cliente(s)...")
+
+    # Criar e iniciar threads para cada cliente simulado
+    for i in range(args.clients):
+        channel = grpc.insecure_channel(GRPC_SERVER)
         stub = event_pb2_grpc.EventServiceStub(channel)
-        Simulator(stub).run()
+        simulator = Simulator(stub, i + 1) # Passa um ID para cada cliente
+        simulators.append(simulator)
+        # Cada thread roda o método run do seu simulador
+        t = threading.Thread(target=simulator.run, daemon=True)
+        threads.append(t)
+        t.start()
+
+    print("[Main] Ctrl-C p/ sair")
+
+    # Manter o thread principal vivo para que os daemon threads continuem rodando
+    try:
+        # O loop de leitura de input para trigger manual ('p') pode ser removido
+        # ou adaptado para acionar todos os simuladores, mas para teste de carga
+        # o trigger automático é mais relevante.
+        # Para manter a interatividade (Ctrl-C para sair), podemos usar um loop simples ou join
+        while True:
+            time.sleep(1) # Espera para não consumir CPU excessivamente
+            # Verificar se todas as threads ainda estão ativas, se necessário
+            if not any(t.is_alive() for t in threads):
+                break
+
+    except KeyboardInterrupt:
+        print("\n[Main] Encerrando simuladores...")
+        for sim in simulators:
+            sim.stop() # Sinaliza para cada simulador parar
+        # Esperar pelas threads terminarem, embora como são daemon threads,
+        # o programa principal pode sair sem esperar.
+        # Para garantir um desligamento limpo, podemos adicionar .join() sem timeout
+        # ou com um timeout curto para não travar se uma thread não parar corretamente.
+        # for t in threads:
+        #     t.join(timeout=1.0)
+
+    print("[Main] Encerrado.")
 
 
 if __name__ == "__main__":
