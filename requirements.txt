@@ -6,3 +6,6 @@ altair
 flask
 numpy
 tabulate
+grpcio>=1.71.0
+grpcio-tools>=1.71.0
+protobuf>=5.29.0
