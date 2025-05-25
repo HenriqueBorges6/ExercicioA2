@@ -3,6 +3,7 @@ import time, uuid
 import event_pb2, event_pb2_grpc
 import random
 import datetime
+from itertools import cycle
 
 
 EVENT_TYPES = [
@@ -50,7 +51,7 @@ def simulate_event(event_type: str):
         case 'rating':
             return event_pb2.Event(rating_event=event_pb2.RatingEvent(
                 rating_id = str(uuid.uuid4()),
-                grade = str(random.randint(1, 5)),
+                grade = random.randint(1, 5),
                 rating_date = now_iso(),
                 user_id = str(uuid.uuid4()),
                 content_id = str(uuid.uuid4())
@@ -85,7 +86,7 @@ def simulate_event(event_type: str):
             date_part = random_date(2025, 2025).isoformat()
             time_part = f"{random.randint(0,23):02}:{random.randint(0,59):02}:00"
             transaction_date = f"{date_part}T{time_part}"
-            return event_pb2.Event(subscription_transaction_event=event_pb2.SubscriptionTransactionEvent(
+            return event_pb2.Event(subscription_event=event_pb2.SubscriptionEvent(
                 transaction_id = str(uuid.uuid4()),
                 transaction_date = transaction_date,
                 payment_method = random.choice(['credit_card', 'paypal', 'gift_card', 'cashflix']),
@@ -102,21 +103,26 @@ def simulate_event(event_type: str):
         case _:
             raise ValueError(f"Event type '{event_type}' not recognized.")
 
-channel = grpc.insecure_channel("localhost:50051")
-stub = event_pb2_grpc.EventServiceStub(channel)
+
+def generate_events():
+    for event_type in cycle(EVENT_TYPES):
+        event = simulate_event(event_type)
+        print(f"[Simulator] Sending {event_type} event...")
+        yield event
+        time.sleep(1)
+
 
 def run():
-    print("[Simulator] Starting gRPC event generation...")
-    try:
-        while True:
-            event_type = random.choice(EVENT_TYPES)
-            event = simulate_event(event_type)
-            print(event)
-            ack = stub.SendEvent(event)
-            print(f"[{now_iso()}] Sent {event_type} event: {ack.status}")
-            time.sleep(0.5)
-    except KeyboardInterrupt:
-        print("[Simulator] Stopping simulator...")
+    with grpc.insecure_channel("localhost:50051") as channel:
+        stub = event_pb2_grpc.EventServiceStub(channel)
+
+        print("[Simulator] Starting gRPC event generation...")
+        try:
+            ack = stub.SendEvent(generate_events())
+            print(f"[Simulator] Received acknowledgment: {ack.status}")
+        
+        except KeyboardInterrupt:
+            print("[Simulator] Stopping simulator...")
 
 
 if __name__ == "__main__":
