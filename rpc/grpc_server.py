@@ -8,8 +8,8 @@ from google.protobuf import empty_pb2
 from pipeline_manager import PipelineManager   # seu gerenciador de pipeline
 
 # ───────────────────────── CONFIGURAÇÃO ────────────────────────────
-ROOT_DIR   = Path(__file__).resolve().parents[1]           # pasta ExercicioA2
-DB_FILE    = ROOT_DIR / "streaming_mock.db"
+ROOT_DIR = Path(__file__).resolve().parents[1]    # …/ExercicioA2
+DB_FILE  = ROOT_DIR / "streaming_mock.db"         # …/ExercicioA2/streaming_mock.db
 LOG_LEVEL  = os.getenv("LOG_LEVEL", "INFO").upper()
 
 logging.basicConfig(

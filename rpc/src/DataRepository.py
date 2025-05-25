@@ -15,8 +15,8 @@ class DataRepository:
             db_path: caminho para o arquivo SQLite. Se None, usa `../streaming_mock.db`.
         """
         base_dir = os.path.dirname(__file__)
-        self.db_path = os.path.join(base_dir,'streaming_mock.db')
-        print(self.db_path)
+        self.db_path = db_path or os.path.join(base_dir, '..', 'streaming_mock.db')
+    
     def read_header(self, file_path):
         header_columns = []
 
