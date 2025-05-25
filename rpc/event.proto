@@ -8,14 +8,7 @@ message Ack { string status = 1; }
 
 message PipelineRequest { int32 n_processes = 1; }
 
-message ReportsBundle {
-  bytes events_csv       = 1;
-  bytes revenue_day_csv  = 2;
-  bytes revenue_mon_csv  = 3;
-  bytes revenue_year_csv = 4;
-  bytes genre_csv        = 5;
-  bytes unfinished_csv   = 6;
-}
+
 
 // ───── eventos (iguais aos que já usava) ──────────────────────────
 message UserEvent {
@@ -82,6 +75,15 @@ message RevenueEvent {
   string revenue_id = 1;
   string date       = 2;
   string value      = 3;
+}
+message ReportsBundle {
+  bytes events_csv       = 1;
+  bytes revenue_day_csv  = 2;
+  bytes revenue_mon_csv  = 3;
+  bytes revenue_year_csv = 4;
+  bytes genre_csv        = 5;
+  bytes unfinished_csv   = 6;
+  int64 last_finished_ms = 7; 
 }
 
 // ───── envelope com oneof ─────────────────────────────────────────

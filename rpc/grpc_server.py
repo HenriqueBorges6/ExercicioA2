@@ -194,6 +194,8 @@ class EventServiceServicer(event_pb2_grpc.EventServiceServicer):
             revenue_year_csv = out.get("revenue_by_year.csv",       b""),
             genre_csv        = out.get("genre_views_last_24h.csv",  b""),
             unfinished_csv   = out.get("unfinished_by_genre.csv",   b""),
+            last_finished_ms = out.get("_last_finished_ms", 0)
+
         )
 
 # ╭────────────────────────── bootstrap ─────────────────────────────╮

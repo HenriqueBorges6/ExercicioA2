@@ -1,6 +1,7 @@
 # sim_pipeline.py
 import os, sys, time, uuid, random, datetime, threading, signal, pathlib
 from itertools import cycle
+from collections import deque
 
 import grpc
 from google.protobuf import empty_pb2
@@ -20,6 +21,7 @@ BATCH_TRIGGER    = 500           # chama pipeline a cada 500 eventos
 REPORT_DIR       = pathlib.Path(__file__).with_name("reports")
 REPORT_DIR.mkdir(exist_ok=True)
 GRPC_SERVER      = "localhost:50051"
+GRPC_SERVER = os.getenv("GRPC_SERVER", "localhost:50051")
 
 
 ###############################################################################
@@ -118,6 +120,8 @@ def simulate_event(event_type: str) -> event_pb2.Event:
 ###############################################################################
 # Gerador & controle do pipeline
 ###############################################################################
+from collections import deque
+
 class Simulator:
     def __init__(self, stub):
         self.stub        = stub
@@ -125,36 +129,79 @@ class Simulator:
         self._stop       = threading.Event()
         self._evt_iter   = cycle(EVENT_TYPES)
 
+        self.send_queue  = deque()
+
     # ---------- produção de eventos ----------
     def _event_stream(self):
+        """Gera eventos infinitamente até _stop ser sinalizado."""
         while not self._stop.is_set():
+
+            if self.sent % BATCH_TRIGGER == 0:
+                t0_ms = int(time.time() * 1000)   # epoch-millis
+                self.send_queue.append(t0_ms)
+
             ev_type = next(self._evt_iter)
             yield simulate_event(ev_type)
             self.sent += 1
 
-            # trigger automático?
             if self.sent % BATCH_TRIGGER == 0:
                 self._trigger_pipeline()
 
-            time.sleep(0.1)          # ajusta para stress-test ou dev-test (0.1 s = 10 evt/s)
+            time.sleep(0.1)  
 
-    # ---------- chamadas RPC extras ----------
     def _trigger_pipeline(self):
         def _call():
             try:
+                # 1) dispara o ETL
                 self.stub.TriggerPipeline(
                     event_pb2.PipelineRequest(n_processes=os.cpu_count() or 4)
                 )
-                log = "[Simulator] Pipeline RPC OK"
+                print("[Simulator] Pipeline RPC OK")
+
+                # 2) espera até terminar
+                last_seen = 0
+                while not self._stop.is_set():
+                    bundle = self.stub.GetLatestReports(empty_pb2.Empty())
+                    if bundle.last_finished_ms > last_seen:
+                        last_seen = bundle.last_finished_ms
+
+                        # -------- latência ---------
+                        if self.send_queue:
+                            t0 = self.send_queue.popleft()
+                            lat = last_seen - t0
+                            print(f"[LAT] {lat:.1f} ms", flush=True)
+
+                        # -------- salvar CSVs ------
+                        for field, fname in [
+                            (bundle.events_csv,       "event_count_last_hour.csv"),
+                            (bundle.revenue_day_csv,  "revenue_by_day.csv"),
+                            (bundle.revenue_mon_csv,  "revenue_by_month.csv"),
+                            (bundle.revenue_year_csv, "revenue_by_year.csv"),
+                            (bundle.genre_csv,        "genre_views_last_24h.csv"),
+                            (bundle.unfinished_csv,   "unfinished_by_genre.csv"),
+                        ]:
+                            if field:
+                                (REPORT_DIR / fname).write_bytes(field)
+                        break   # pipeline finalizado
+
+                    time.sleep(0.2)  # 200 ms de intervalo
+
             except grpc.RpcError as err:
-                log = f"[Simulator] Pipeline RPC failed: {err.details()}"
-            print(log)
+                print("[Simulator] Pipeline RPC failed:", err.details())
 
         threading.Thread(target=_call, daemon=True).start()
     def _fetch_reports(self):
         try:
             bundle = self.stub.GetLatestReports(empty_pb2.Empty())
-            saved  = 0
+
+            # ------ latência: fim do pipeline - início do lote ---------------
+            if bundle.last_finished_ms and self.send_queue:
+                t0 = self.send_queue.popleft()
+                lat = bundle.last_finished_ms - t0   # em milissegundos
+                print(f"[LAT] {lat:.1f} ms", flush=True)
+
+            # ------ salvar CSVs (já existia) ---------------------------------
+            saved = 0
             for field, fname in [
                 (bundle.events_csv,       "event_count_last_hour.csv"),
                 (bundle.revenue_day_csv,  "revenue_by_day.csv"),
@@ -167,6 +214,7 @@ class Simulator:
                     (REPORT_DIR / fname).write_bytes(field)
                     saved += 1
             print(f"[Simulator] {saved} CSVs salvos em {REPORT_DIR}")
+
         except grpc.RpcError as err:
             print("[Simulator] GetLatestReports RPC failed:", err.details())
 
