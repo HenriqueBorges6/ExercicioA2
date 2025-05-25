@@ -1,6 +1,6 @@
 import subprocess, sys, os, time, statistics, json, multiprocessing as mp
 
-SIM = "simulator.py"
+SIM = os.path.join(os.path.dirname(__file__), "simulator.py")
 SERVER = os.getenv("SERVER", "localhost:50051")
 
 def run_instance(i, out_q):

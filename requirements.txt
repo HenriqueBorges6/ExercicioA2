@@ -6,3 +6,6 @@ altair
 flask
 numpy
 tabulate
+grpcio
+grpcio-tools
+protobuf
