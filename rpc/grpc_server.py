@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS Revenue(
 class EventServiceServicer(event_pb2_grpc.EventServiceServicer):
     def __init__(self):
         self.conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+        self.conn.execute("PRAGMA journal_mode=WAL")  # Add this line
         self.conn.executescript(SCHEMA)
         self.wlock = threading.Lock()            # serializa INSERTs
         self.pmgr  = PipelineManager()

@@ -152,24 +152,33 @@ class Simulator:
     def _trigger_pipeline(self):
         def _call():
             try:
-                # 1) dispara o ETL
+                # 1) Registrar o momento exato ANTES de disparar o pipeline
+                pipeline_start_ms = int(time.time() * 1000)
+                
+                # 2) Disparar o ETL
                 self.stub.TriggerPipeline(
                     event_pb2.PipelineRequest(n_processes=os.cpu_count() or 4)
                 )
                 print("[Simulator] Pipeline RPC OK")
 
-                # 2) espera até terminar
+                # 3) Esperar até terminar
                 last_seen = 0
                 while not self._stop.is_set():
                     bundle = self.stub.GetLatestReports(empty_pb2.Empty())
+                    
+                    # Só processar se for uma medição nova
                     if bundle.last_finished_ms > last_seen:
                         last_seen = bundle.last_finished_ms
 
-                        # -------- latência ---------
-                        if self.send_queue:
-                            t0 = self.send_queue.popleft()
-                            lat = last_seen - t0
+                        # -------- Cálculo Correto da Latência ---------
+                        # Mede apenas o tempo do pipeline (desde o Trigger até a conclusão)
+                        lat = bundle.last_finished_ms - pipeline_start_ms
+                        
+                        # Verificação de sanidade (latência não pode ser negativa)
+                        if lat >= 0:
                             print(f"[LAT] {lat:.1f} ms", flush=True)
+                        else:
+                            print(f"[WARN] Latência inválida ignorada: {lat:.1f} ms")
 
                         # -------- salvar CSVs ------
                         for field, fname in [
@@ -182,7 +191,7 @@ class Simulator:
                         ]:
                             if field:
                                 (REPORT_DIR / fname).write_bytes(field)
-                        break   # pipeline finalizado
+                        break  # pipeline finalizado
 
                     time.sleep(0.2)  # 200 ms de intervalo
 

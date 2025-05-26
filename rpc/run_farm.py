@@ -29,7 +29,7 @@ def experiment(n_instances):
 
 if __name__ == "__main__":
     results = {}
-    for n in [1,2,4,6,8,10,12,14,16,18,20]:
+    for n in [2,6,8,12,16,20]:
         print(f"▶ Rodando com {n} instâncias…")
         m = experiment(n)
         results[n] = m
